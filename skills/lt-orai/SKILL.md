@@ -1,8 +1,12 @@
 ---
 name: lt-orai
-description: Pateikia užklausos metu naujausią pasiekiamą penkių didžiausių Lietuvos miestų (Vilnius, Kaunas, Klaipėda, Šiauliai, Panevėžys) valandinę orų prognozę. ChatGPT režime skaito viešus meteo.lt HTML puslapius naudodamas interneto paiešką / naršymą ir nevykdo Python ar tiesioginių API užklausų.
+description: "LT-orai: paleisk, kai vartotojas parašo „panaudok LT-orai“, „LT-orai“, „parodyk LT-orai“ ar paprašo dabartinių penkių didžiausių Lietuvos miestų orų. Kiekvieną kartą interneto naršymo priemone skaityk naują Vilniaus, Kauno, Klaipėdos, Šiaulių ir Panevėžio valandinę prognozę iš meteo.lt HTML puslapių; Python ir API nereikia."
 ---
 # LT-orai
+
+## Iškvietimas
+
+**Trigeris:** jei vartotojas parašo tik „panaudok LT-orai“ (taip pat „LT-orai“), iš karto atlik visus toliau pateiktus žingsnius ir pateik lentelę. Neprašyk pakartoti instrukcijų ar GitHub adreso. Šis įgūdis skirtas vykdyti pokalbyje, ne vien pateikti naudojimo paaiškinimą.
 
 ## ChatGPT režimas: tik vieši HTML puslapiai, be Python
 
