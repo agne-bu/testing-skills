@@ -1,14 +1,33 @@
 ---
 name: lt-orai
-description: Pateikia dabartinę temperatūrą ir oro sąlygas Vilniuje, Kaune, Klaipėdoje, Šiauliuose ir Panevėžyje, naudodamas Open-Meteo API. Naudok, kai vartotojas prašo LT-orai, Lietuvos penkių didžiausių miestų orų ar jų temperatūrų palyginimo.
+description: Pateikia užklausos metu aktualius penkių didžiausių Lietuvos miestų (Vilnius, Kaunas, Klaipėda, Šiauliai, Panevėžys) orus. ChatGPT režimu naudoja viešus interneto šaltinius be Python; Cursor / Codex gali paleisti Open-Meteo Python scenarijų. Naudoti, kai prašoma LT-orai ar Lietuvos miestų dabartinių orų.
 ---
 # LT-orai
 
-1. Penki miestai fiksuoti: Vilnius, Kaunas, Klaipėda, Šiauliai, Panevėžys.
-2. Pagrindinis ir vienintelis šio įgūdžio duomenų šaltinis: Open-Meteo Forecast API, https://open-meteo.com/en/docs. Jis teikia modeliuotas dabartines sąlygas, o ne tiesioginius meteorologinių stočių matavimus.
-3. Jei galima vykdyti Python su interneto prieiga, iš įgūdžio katalogo paleisk `python scripts/orai.py`. Programa naudoja tik standartinę Python biblioteką (rekomenduojama Python 3.9+ ir veikiančios laiko juostų duomenų bazės).
-4. Jei Python negalima paleisti, interneto priemonėmis užklausk `https://api.open-meteo.com/v1/forecast`, nurodyk penkių miestų koordinates iš `scripts/orai.py`, parametrus `current=temperature_2m,weather_code`, `timezone=Europe/Vilnius` ir `timeformat=unixtime`. API grąžina penkių objektų masyvą ta pačia koordinačių tvarka.
-5. `weather_code` yra WMO kodas. Versk jį pagal `scripts/orai.py` esantį `CODES` žodyną; nežinomą kodą žymėk „nenurodyta“.
-6. Parodyk lentelę „Miestas | Temperatūra | Oro sąlygos | Laikas (Lietuvoje)“. Naudok API grąžintą `current.time` ir konvertuok iš Unix UTC į Europe/Vilnius. Nevadink šių duomenų faktiniais matavimais.
-7. Nurodyk šaltinį ir užklausos laiką. Jei API neveikia arba laukai trūksta, nekurk išgalvotų reikšmių; pažymėk „duomenų nėra“.
-8. Nenaudok ankstesnio meteo.lt API kodo. Testavimo scenarijai: `evals/evals.json`.
+## Tikslas
+Gauti šio iškvietimo metu naujausius pasiekiamus temperatūros ir oro sąlygų duomenis **Vilniui, Kaunui, Klaipėdai, Šiauliams ir Panevėžiui**. NENAUDOTI GitHub failuose saugomų senų temperatūrų ir neapsimesti, kad paieškos ištrauka yra tiesioginis matavimas.
+
+## 1. ChatGPT režimas (numatytasis; be Python)
+
+1. Kiekvieną kartą naudok prieinamą **interneto paieškos / atvėrimo arba orų duomenų priemonę**, o ne vien turimą modelio atmintį. Tikrink užklausos datos aktualumą ir kiekvieno miesto duomenų stebėjimo / atnaujinimo laiką.
+2. Pirmasis šaltinis: viešas **Open-Meteo** dabartinių modeliuotų orų API:
+   - Dokumentacija: https://open-meteo.com/en/docs
+   - Viena penkių miestų užklausa (miestų eiliškumas sutampa su lentelės eilėmis):
+     https://api.open-meteo.com/v1/forecast?latitude=54.6872%2C54.8985%2C55.7033%2C55.9349%2C55.7348&longitude=25.2797%2C23.9036%2C21.1443%2C23.3137%2C24.3575&current=temperature_2m%2Cweather_code&timezone=Europe%2FVilnius
+   - Jei naršymo įrankis palaiko JSON: atsakyme tikėkis penkių objektų masyvo; iš kiekvieno imk `current.temperature_2m`, `current.weather_code` ir `current.time`. Jei `time` grąžinamas vietos laiku, papildomai jo nekonvertuok.
+3. **Jei tiesioginis API JSON adresas užblokuotas naršymo įrankyje** (kai kurios ChatGPT naršyklės neleidžia atverti tokių adresų), NEbandyk to sutaisyti kodu ir nenutrauk: naudok įrankio orų funkciją arba viešų orų puslapių paiešką kiekvienam miestui. Šaltinius rinkis iš meteo.lt, meteofor.lt, yr.no, open-meteo.com ar kitų patikimų puslapių, kuriuose aiškiai matomi to miesto duomenys, vienetai ir aktualumo laikas. Vietovės prognozės papildomas šaltinis: https://api.meteo.lt/v1/places/vilnius/forecasts/long-term (keisk `vilnius` į `kaunas`, `klaipeda`, `siauliai`, `panevezys`).
+4. Jei matai tik prognozę, aiškiai vadink ją **prognoze**, o ne dabartiniu matavimu. Nelygink skirtingų miestų istorinių ar skirtingų parų reikšmių kaip vienalaikių.
+5. `weather_code` (WMO) kodus išversk pagal `scripts/orai.py` žodyną `CODES`; jei įrankis pateikia jau tekstinę sąlygą, naudok ją.
+6. Sudaryk lietuvišką lentelę `Miestas | Temperatūra (°C) | Oro sąlygos | Duomenų laikas (LT) | Šaltinis / tipas`. Nurodyk užklausos datą ir šaltinių nuorodas. Jei kurios nors reikšmės negali patikimai patvirtinti, rašyk **„duomenų nėra“**. Neišgalvok reikšmių.
+7. Jei pokalbyje jau pateikta pasenusi orų lentelė, naujam prašymui nevartok jos kaip aktualios – gauk naujus duomenis.
+
+## 2. Cursor / Codex režimas (pasirinktinis)
+
+Jei yra Python 3.9+ su interneto prieiga, repozitorijos šaknyje vykdyk:
+```bash
+python skills/lt-orai/scripts/orai.py
+```
+Programa pati kreipiasi į Open-Meteo ir atspausdina penkių miestų orus. Nereikia API rakto. Kai negalima paleisti programos, naudok 1 skyriaus interneto režimą.
+
+## 3. Patikrinimas
+Automatinį API integracijos testą GitHub Actions vykdo `.github/workflows/lt-orai-test.yml`. Jis tikrina Python kelią, bet **negarantuoja** kiekvieno ChatGPT naršymo įrankio galimybės atverti API JSON; todėl ChatGPT režime būtinas atsarginis viešų puslapių kelias. Testavimo scenarijai: `evals/evals.json`.
