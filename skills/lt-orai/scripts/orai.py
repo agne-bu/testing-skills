@@ -1,62 +1,79 @@
 #!/usr/bin/env python3
-"""LT-orai: naujausi faktiniai stebėjimai arba artimiausia prognozė."""
+"""LT-orai: dabartinės modeliuotos oro sąlygos iš Open-Meteo."""
 import json
+import sys
+import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
-BASE = "https://api.meteo.lt/v1"
 CITIES = [
-    ("Vilnius", "vilniaus-ams", "vilnius"),
-    ("Kaunas", "kauno-ams", "kaunas"),
-    ("Klaipėda", "klaipedos-ams", "klaipeda"),
-    ("Šiauliai", "siauliu-ams", "siauliai"),
-    ("Panevėžys", "panevezio-ams", "panevezys"),
+    ("Vilnius", 54.6872, 25.2797),
+    ("Kaunas", 54.8985, 23.9036),
+    ("Klaipėda", 55.7033, 21.1443),
+    ("Šiauliai", 55.9349, 23.3137),
+    ("Panevėžys", 55.7348, 24.3575),
 ]
-CONDITIONS = dict(zip(
-    ["clear","partly-cloudy","cloudy-with-sunny-intervals","cloudy","light-rain","rain","heavy-rain","thunder","isolated-thunderstorms","thunderstorms","heavy-rain-with-thunderstorms","light-sleet","sleet","freezing-rain","hail","light-snow","snow","heavy-snow","fog"],
-    ["giedra","mažai debesuota","debesuota su pragiedruliais","debesuota","nedidelis lietus","lietus","smarkus lietus","perkūnija","trumpas lietus su perkūnija","lietus su perkūnija","smarkus lietus su perkūnija","nedidelė šlapdriba","šlapdriba","lijundra","kruša","nedidelis sniegas","sniegas","smarkus sniegas","rūkas"]
-))
+CODES = {
+    0: "giedra", 1: "daugiausia giedra", 2: "mažai debesuota",
+    3: "debesuota", 45: "rūkas", 48: "šerkšno rūkas",
+    51: "silpna dulksna", 53: "dulksna", 55: "stipri dulksna",
+    56: "silpna lijundra", 57: "stipri lijundra",
+    61: "silpnas lietus", 63: "lietus", 65: "smarkus lietus",
+    66: "silpnas šąlantis lietus", 67: "stiprus šąlantis lietus",
+    71: "silpnas sniegas", 73: "sniegas", 75: "smarkus sniegas",
+    77: "sniego kruopos", 80: "silpnas trumpalaikis lietus",
+    81: "trumpalaikis lietus", 82: "smarkus trumpalaikis lietus",
+    85: "silpnas trumpalaikis sniegas", 86: "smarkus trumpalaikis sniegas",
+    95: "perkūnija", 96: "perkūnija su nedidele kruša",
+    99: "perkūnija su stipria kruša",
+}
 
-def get(path):
-    req = urllib.request.Request(BASE + path, headers={"User-Agent": "LT-orai/1.0"})
-    with urllib.request.urlopen(req, timeout=15) as response:
-        return json.load(response)
+def fetch():
+    params = {
+        "latitude": ",".join(str(c[1]) for c in CITIES),
+        "longitude": ",".join(str(c[2]) for c in CITIES),
+        "current": "temperature_2m,weather_code",
+        "timezone": "Europe/Vilnius",
+        "timeformat": "unixtime",
+    }
+    url = "https://api.open-meteo.com/v1/forecast?" + urllib.parse.urlencode(params)
+    req = urllib.request.Request(url, headers={"User-Agent": "LT-orai/1.1"})
+    with urllib.request.urlopen(req, timeout=20) as response:
+        result = json.load(response)
+    if not isinstance(result, list) or len(result) != len(CITIES):
+        raise ValueError("Netikėtas Open-Meteo atsakymo formatas")
+    return result
 
-def utc_time(value):
-    return datetime.fromisoformat(value.replace(" ", "T").replace("Z", "+00:00")).replace(tzinfo=timezone.utc) if "+" not in value and not value.endswith("Z") else datetime.fromisoformat(value.replace(" ", "T").replace("Z", "+00:00")).astimezone(timezone.utc)
-
-def weather(station, place):
-    try:
-        rows = get(f"/stations/{station}/observations/latest").get("observations", [])
-        valid = [x for x in rows if x.get("airTemperature") is not None and x.get("observationTimeUtc")]
-        if valid:
-            x = max(valid, key=lambda x: utc_time(x["observationTimeUtc"]))
-            return x, utc_time(x["observationTimeUtc"]), "stebėjimas"
-    except (OSError, ValueError, KeyError):
-        pass
-    rows = get(f"/places/{place}/forecasts/long-term").get("forecastTimestamps", [])
-    now = datetime.now(timezone.utc)
-    valid = [x for x in rows if x.get("airTemperature") is not None and x.get("forecastTimeUtc") and utc_time(x["forecastTimeUtc"]) >= now]
-    if not valid:
-        raise ValueError("Nėra artimiausios prognozės")
-    x = min(valid, key=lambda x: utc_time(x["forecastTimeUtc"]))
-    return x, utc_time(x["forecastTimeUtc"]), "prognozė"
+def format_rows(result):
+    rows = []
+    for (name, _, _), item in zip(CITIES, result):
+        current = item.get("current") or {}
+        temp = current.get("temperature_2m")
+        timestamp = current.get("time")
+        code = current.get("weather_code")
+        if not isinstance(temp, (int, float)) or not isinstance(timestamp, (int, float)):
+            rows.append(f"| {name} | duomenų nėra | nenurodyta | — |")
+            continue
+        local = datetime.fromtimestamp(timestamp, timezone.utc).astimezone(
+            ZoneInfo("Europe/Vilnius")).strftime("%Y-%m-%d %H:%M")
+        rows.append(f"| {name} | {temp:g} °C | {CODES.get(code, 'nenurodyta')} | {local} |")
+    return rows
 
 def main():
-    print("| Miestas | Temperatūra | Oro sąlygos | Duomenų tipas | Laikas (LT) |")
-    print("|---|---:|---|---|---|")
-    for name, station, place in CITIES:
-        try:
-            x, when, kind = weather(station, place)
-            temp = f'{x["airTemperature"]:g} °C'
-            condition = CONDITIONS.get(x.get("conditionCode"), "nenurodyta")
-            local = when.astimezone(ZoneInfo("Europe/Vilnius")).strftime("%Y-%m-%d %H:%M")
-            print(f"| {name} | {temp} | {condition} | {kind} | {local} |")
-        except (OSError, ValueError, KeyError, TypeError):
-            print(f"| {name} | duomenų nėra | duomenų nėra | — | — |")
-    print("\nŠaltinis: Lietuvos hidrometeorologijos tarnyba (meteo.lt), https://api.meteo.lt/")
-    print("Gauta:", datetime.now(ZoneInfo("Europe/Vilnius")).strftime("%Y-%m-%d %H:%M"), "(Lietuvos laiku)")
+    try:
+        result = fetch()
+        rows = format_rows(result)
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        print(f"Nepavyko gauti aktualių Open-Meteo duomenų: {exc}", file=sys.stderr)
+        return 1
+    print("| Miestas | Temperatūra | Oro sąlygos | Laikas (Lietuvoje) |")
+    print("|---|---:|---|---|")
+    print("\n".join(rows))
+    print("\nDuomenų tipas: dabartinės modeliuotos sąlygos, ne stočių matavimai.")
+    print("Šaltinis: https://open-meteo.com/")
+    print("Gauta:", datetime.now(ZoneInfo("Europe/Vilnius")).strftime("%Y-%m-%d %H:%M"), "(LT)")
+    return 0
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
