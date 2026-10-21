@@ -3,20 +3,20 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "LT-orai",
-      "expected_output": "Penki miestai, temperatūros, sąlygos, laikas ir šaltinis",
+      "prompt": "Panaudok LT-orai ir parodyk penkių didžiausių Lietuvos miestų orus.",
+      "expected_output": "Penki miestai su Open-Meteo modeliuota temperatūra, WMO sąlygomis ir vietiniu laiku.",
       "files": []
     },
     {
       "id": 2,
-      "prompt": "Koks dabar oras penkiuose didžiausiuose Lietuvos miestuose?",
-      "expected_output": "Naujausi faktiniai duomenys, prognozės pažymėtos atskirai",
+      "prompt": "Koks dabar oras Vilniuje, Kaune, Klaipėdoje, Šiauliuose ir Panevėžyje?",
+      "expected_output": "Penkios reikšmės, šaltinis Open-Meteo, aiškiai pažymėtas duomenų tipas.",
       "files": []
     },
     {
       "id": 3,
-      "prompt": "Pateik Lietuvos didmiesčių temperatūras, jei vienos stoties duomenys nepasiekiami",
-      "expected_output": "Vienam miestui naudojama aiškiai pažymėta prognozė arba duomenų nėra",
+      "prompt": "Paleisk LT-orai, kai API nepasiekiama.",
+      "expected_output": "Klaida arba duomenų nėra, jokios išgalvotos temperatūros.",
       "files": []
     }
   ]
