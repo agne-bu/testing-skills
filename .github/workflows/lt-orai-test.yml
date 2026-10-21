@@ -1,0 +1,30 @@
+name: LT-orai live API test
+on:
+  push:
+    paths:
+      - "skills/lt-orai/**"
+      - ".github/workflows/lt-orai-test.yml"
+  workflow_dispatch:
+
+jobs:
+  live-weather:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify live Open-Meteo weather data for all 5 cities
+        run: |
+          python skills/lt-orai/scripts/orai.py | tee /tmp/lt-orai-output.txt
+          python - <<'PY'
+          from pathlib import Path
+          text = Path("/tmp/lt-orai-output.txt").read_text()
+          for city in ("Vilnius", "Kaunas", "Klaipėda", "Šiauliai", "Panevėžys"):
+              rows = [line for line in text.splitlines() if line.startswith("| " + city + " |")]
+              assert len(rows) == 1, f"Trūksta miesto: {city}"
+              assert "duomenų nėra" not in rows[0], f"Nėra aktualių duomenų: {city}"
+              assert "°C" in rows[0], f"Nėra temperatūros: {city}"
+          print("LIVE API TEST PASSED: visi penki miestai turi temperatūras.")
+          PY
