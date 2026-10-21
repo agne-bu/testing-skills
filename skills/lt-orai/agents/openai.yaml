@@ -1,0 +1,4 @@
+interface:
+  display_name: "LT-orai"
+  short_description: "5 didžiausių Lietuvos miestų temperatūra ir oro sąlygos iš meteo.lt"
+  default_prompt: "Pateik naujausią temperatūrą ir oro sąlygas penkiuose didžiausiuose Lietuvos miestuose."
