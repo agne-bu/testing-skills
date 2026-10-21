@@ -1,0 +1,23 @@
+{
+  "skill_name": "lt-orai",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "LT-orai",
+      "expected_output": "Penki miestai, temperatūros, sąlygos, laikas ir šaltinis",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Koks dabar oras penkiuose didžiausiuose Lietuvos miestuose?",
+      "expected_output": "Naujausi faktiniai duomenys, prognozės pažymėtos atskirai",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Pateik Lietuvos didmiesčių temperatūras, jei vienos stoties duomenys nepasiekiami",
+      "expected_output": "Vienam miestui naudojama aiškiai pažymėta prognozė arba duomenų nėra",
+      "files": []
+    }
+  ]
+}
