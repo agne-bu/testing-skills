@@ -1,14 +1,14 @@
 ---
 name: lt-orai
-description: Pateikia naujausią oro temperatūrą ir sąlygas penkiuose didžiausiuose Lietuvos miestuose iš oficialaus meteo.lt šaltinio. Naudok, kai prašoma „LT-orai“, „LT orai“, orų penkiuose didžiausiuose miestuose arba Lietuvos didmiesčių temperatūrų palyginimo.
+description: Pateikia dabartinę temperatūrą ir oro sąlygas Vilniuje, Kaune, Klaipėdoje, Šiauliuose ir Panevėžyje, naudodamas Open-Meteo API. Naudok, kai vartotojas prašo LT-orai, Lietuvos penkių didžiausių miestų orų ar jų temperatūrų palyginimo.
 ---
 # LT-orai
 
-1. Pateik Vilnių, Kauną, Klaipėdą, Šiaulius ir Panevėžį tokia tvarka.
-2. Naudok oficialią Lietuvos hidrometeorologijos tarnybos API `https://api.meteo.lt/v1/`. Jei yra galimybė vykdyti Python su tinklo prieiga, paleisk `python scripts/orai.py` iš šio įgūdžio katalogo. Kitu atveju užklausk API turimomis interneto priemonėmis.
-3. Pirmiausia imk naujausius faktinius matavimus iš `/stations/{station-code}/observations/latest`: vilniaus-ams, kauno-ams, klaipedos-ams, siauliu-ams, panevezio-ams. Patikrink stočių kodus pagal `/stations`, jei užklausa grąžina klaidą. Imk įrašą su naujausia `observationTimeUtc`, kuriame yra `airTemperature`.
-4. Jei miesto faktinio matavimo nėra, naudok `/places/{place-code}/forecasts/long-term`, pasirink artimiausią prognozės laiką, kuris nėra ankstesnis už dabartinį UTC laiką. Nevadink prognozės faktiniu matavimu.
-5. `conditionCode` versk į lietuvių kalbą pagal `references/conditions.md`. Jei sąlyga nežinoma ar null, rašyk „nenurodyta“.
-6. Pateik kompaktišką lentelę: Miestas | Temperatūra (°C) | Oro sąlygos | Duomenų tipas | Laikas (Lietuvos laiku). Laiką konvertuok į Europe/Vilnius, įvertindamas vasaros laiką. Jei vienam miestui duomenų nėra, rašyk „duomenų nėra“, neišgalvok.
-7. Po lentele nurodyk šaltinį: Lietuvos hidrometeorologijos tarnyba, https://meteo.lt/ ir duomenų gavimo laiką. Nenaudok senų atsakymų kaip aktualių duomenų.
-8. Jei API nepasiekiama, aiškiai pranešk, kad aktualių duomenų patvirtinti nepavyko.
+1. Penki miestai fiksuoti: Vilnius, Kaunas, Klaipėda, Šiauliai, Panevėžys.
+2. Pagrindinis ir vienintelis šio įgūdžio duomenų šaltinis: Open-Meteo Forecast API, https://open-meteo.com/en/docs. Jis teikia modeliuotas dabartines sąlygas, o ne tiesioginius meteorologinių stočių matavimus.
+3. Jei galima vykdyti Python su interneto prieiga, iš įgūdžio katalogo paleisk `python scripts/orai.py`. Programa naudoja tik standartinę Python biblioteką (rekomenduojama Python 3.9+ ir veikiančios laiko juostų duomenų bazės).
+4. Jei Python negalima paleisti, interneto priemonėmis užklausk `https://api.open-meteo.com/v1/forecast`, nurodyk penkių miestų koordinates iš `scripts/orai.py`, parametrus `current=temperature_2m,weather_code`, `timezone=Europe/Vilnius` ir `timeformat=unixtime`. API grąžina penkių objektų masyvą ta pačia koordinačių tvarka.
+5. `weather_code` yra WMO kodas. Versk jį pagal `scripts/orai.py` esantį `CODES` žodyną; nežinomą kodą žymėk „nenurodyta“.
+6. Parodyk lentelę „Miestas | Temperatūra | Oro sąlygos | Laikas (Lietuvoje)“. Naudok API grąžintą `current.time` ir konvertuok iš Unix UTC į Europe/Vilnius. Nevadink šių duomenų faktiniais matavimais.
+7. Nurodyk šaltinį ir užklausos laiką. Jei API neveikia arba laukai trūksta, nekurk išgalvotų reikšmių; pažymėk „duomenų nėra“.
+8. Nenaudok ankstesnio meteo.lt API kodo. Testavimo scenarijai: `evals/evals.json`.
